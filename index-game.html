@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Game. Just For You. 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose:    #e8526a;
+    --gold:    #f0c060;
+    --cream:   #fdf8f2;
+    --dark:    #1a0e0a;
+    --mid:     #3d1f14;
+    --soft:    #f5ddd0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--dark);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Stars bg ── */
+  #stars {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(240,192,96,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 70%, rgba(232,82,106,0.07) 0%, transparent 60%),
+      var(--dark);
+  }
+  .star {
+    position: absolute; border-radius: 50%;
+    background: white; animation: twinkle ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.1; transform: scale(1); }
+    50%      { opacity: 0.8; transform: scale(1.4); }
+  }
+
+  /* ── Screens ── */
+  .screen {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    text-align: center;
+  }
+  .screen.active { display: flex; }
+
+  /* ── Intro screen ── */
+  .intro-tag {
+    font-size: 11px; letter-spacing: 0.4em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 24px;
+    animation: fadeUp 1s ease both;
+  }
+  .intro-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(40px, 10vw, 72px);
+    font-weight: 700; line-height: 1.1;
+    color: var(--cream);
+    animation: fadeUp 1s 0.2s ease both;
+  }
+  .intro-title span { color: var(--rose); font-style: italic; }
+  .intro-sub {
+    font-size: clamp(14px, 3vw, 17px);
+    font-weight: 300; color: var(--soft);
+    max-width: 400px; line-height: 1.8;
+    margin-top: 20px;
+    animation: fadeUp 1s 0.4s ease both;
+  }
+  .intro-note {
+    margin-top: 14px;
+    font-size: 12px; color: rgba(240,192,96,0.7);
+    letter-spacing: 0.05em;
+    animation: fadeUp 1s 0.5s ease both;
+  }
+  .btn-start {
+    margin-top: 40px;
+    padding: 16px 44px;
+    background: linear-gradient(135deg, var(--rose), #c0384f);
+    border: none; border-radius: 50px;
+    color: white; font-size: 15px; font-weight: 400;
+    letter-spacing: 0.1em; cursor: pointer;
+    box-shadow: 0 8px 30px rgba(232,82,106,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 1s 0.6s ease both;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(232,82,106,0.5); }
+  .btn-start:active { transform: scale(0.97); }
+
+  /* ── Clue screen ── */
+  .clue-progress {
+    display: flex; gap: 8px; margin-bottom: 36px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .clue-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: background 0.4s ease, transform 0.3s ease;
+  }
+  .clue-dot.done  { background: var(--gold); transform: scale(1.2); }
+  .clue-dot.active{ background: var(--rose); transform: scale(1.3); }
+
+  .clue-number {
+    font-size: 11px; letter-spacing: 0.4em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .clue-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 36px 28px;
+    max-width: 480px; width: 100%;
+    backdrop-filter: blur(10px);
+    margin-bottom: 32px;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .clue-emoji { font-size: 40px; margin-bottom: 16px; display: block; }
+  .clue-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(18px, 4vw, 24px);
+    font-weight: 400; font-style: italic;
+    line-height: 1.65; color: var(--cream);
+  }
+  .clue-hint {
+    margin-top: 14px;
+    font-size: 12px; color: rgba(245,221,208,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  .answer-wrap {
+    width: 100%; max-width: 480px;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+  .answer-input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 50px;
+    padding: 16px 24px;
+    color: var(--cream); font-size: 16px;
+    font-family: 'Lato', sans-serif;
+    outline: none; text-align: center;
+    transition: border-color 0.3s;
+    letter-spacing: 0.05em;
+  }
+  .answer-input::placeholder { color: rgba(255,255,255,0.25); }
+  .answer-input:focus { border-color: var(--rose); }
+  .answer-input.wrong {
+    border-color: var(--rose);
+    animation: shake 0.4s ease;
+  }
+  .answer-input.correct { border-color: var(--gold); }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-8px); }
+    40%     { transform: translateX(8px); }
+    60%     { transform: translateX(-5px); }
+    80%     { transform: translateX(5px); }
+  }
+
+  .btn-check {
+    margin-top: 14px;
+    width: 100%; max-width: 480px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--rose), #c0384f);
+    border: none; border-radius: 50px;
+    color: white; font-size: 15px;
+    letter-spacing: 0.08em; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(232,82,106,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+  .btn-check:hover  { transform: translateY(-2px); }
+  .btn-check:active { transform: scale(0.97); }
+
+  .wrong-msg {
+    margin-top: 12px; font-size: 13px;
+    color: var(--rose); opacity: 0;
+    transition: opacity 0.3s;
+    min-height: 20px;
+  }
+  .wrong-msg.show { opacity: 1; }
+
+  /* ── Unlock panel ── */
+  .unlock-panel {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(26,14,10,0.92);
+    backdrop-filter: blur(12px);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 24px; text-align: center;
+  }
+  .unlock-panel.show { display: flex; }
+  .unlock-emoji  { font-size: 56px; margin-bottom: 20px; animation: popIn 0.5s ease both; }
+  .unlock-title  {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 7vw, 44px);
+    font-weight: 700; color: var(--gold);
+    animation: popIn 0.5s 0.1s ease both;
+  }
+  .unlock-msg {
+    font-size: clamp(15px, 3.5vw, 18px);
+    font-weight: 300; color: var(--soft);
+    max-width: 420px; line-height: 1.8;
+    margin-top: 16px;
+    animation: popIn 0.5s 0.2s ease both;
+  }
+  .unlock-msg em { color: var(--gold); font-style: italic; }
+  .btn-next {
+    margin-top: 32px;
+    padding: 14px 40px;
+    background: linear-gradient(135deg, var(--gold), #d4a040);
+    border: none; border-radius: 50px;
+    color: var(--dark); font-size: 15px; font-weight: 700;
+    letter-spacing: 0.08em; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(240,192,96,0.35);
+    transition: transform 0.2s;
+    animation: popIn 0.5s 0.3s ease both;
+  }
+  .btn-next:hover  { transform: translateY(-2px); }
+  .btn-next:active { transform: scale(0.97); }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* ── Final screen ── */
+  #screen-final .final-tag {
+    font-size: 11px; letter-spacing: 0.45em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 20px; animation: fadeUp 0.8s ease both;
+  }
+  .final-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 9vw, 68px);
+    font-weight: 700; line-height: 1.1;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+  .final-title .accent { color: var(--rose); font-style: italic; }
+  .final-answer-reveal {
+    margin-top: 24px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 6vw, 40px);
+    font-style: italic; color: var(--gold);
+    animation: fadeUp 0.8s 0.25s ease both;
+  }
+  .final-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    padding: 36px 28px; max-width: 500px; width: 100%;
+    margin-top: 32px;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+  .final-msg {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(17px, 3.8vw, 22px);
+    font-style: italic; font-weight: 400;
+    line-height: 1.75; color: var(--cream);
+  }
+  .final-msg em { color: var(--gold); }
+  .final-sign {
+    margin-top: 20px; font-size: 13px;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: rgba(240,192,96,0.6);
+  }
+  .hearts {
+    margin-top: 32px; display: flex; justify-content: center; gap: 14px;
+    animation: fadeUp 0.8s 0.6s ease both;
+  }
+  .hearts span {
+    font-size: 24px;
+    animation: heartbeat 2s ease-in-out infinite;
+  }
+  .hearts span:nth-child(2) { animation-delay: 0.3s; }
+  .hearts span:nth-child(3) { animation-delay: 0.6s; }
+
+  /* ── Confetti ── */
+  .confetti-piece {
+    position: fixed; width: 8px; height: 8px;
+    border-radius: 2px; pointer-events: none; z-index: 200;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.3); }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- ══════════════ INTRO SCREEN ══════════════ -->
+<div class="screen active" id="screen-intro">
+  <p class="intro-tag">A birthday surprise, just for you</p>
+  <h1 class="intro-title">Hey <span>Tattianer.</span><br>Ready to play?</h1>
+  <p class="intro-sub">There are 4 clues hidden in this little world. Each one unlocks a message meant only for you. At the end, a final answer awaits — something only <em>we</em> would understand.</p>
+  <p class="intro-note">💡 Answers are not case sensitive</p>
+  <button class="btn-start" onclick="startGame()">Let's go 🌸</button>
+</div>
+
+<!-- ══════════════ CLUE SCREEN ══════════════ -->
+<div class="screen" id="screen-clue">
+  <div class="clue-progress" id="progressDots"></div>
+  <p class="clue-number" id="clueNumber">Clue 1 of 4</p>
+
+  <div class="clue-card">
+    <span class="clue-emoji" id="clueEmoji">🌍</span>
+    <p class="clue-text" id="clueText"></p>
+    <p class="clue-hint" id="clueHint"></p>
+  </div>
+
+  <div class="answer-wrap">
+    <input
+      class="answer-input"
+      id="answerInput"
+      type="text"
+      placeholder="Your answer..."
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+      onkeydown="if(event.key==='Enter') checkAnswer()"
+    />
+    <p class="wrong-msg" id="wrongMsg"></p>
+    <button class="btn-check" onclick="checkAnswer()">Check ✨</button>
+  </div>
+</div>
+
+<!-- ══════════════ FINAL SCREEN ══════════════ -->
+<div class="screen" id="screen-final">
+  <p class="final-tag">You made it, birthday girl 🎂</p>
+  <h1 class="final-title">You cracked it.<br>Here's your <span class="accent">gift. 🎁</span></h1>
+
+  <div class="final-card" style="margin-top:28px;">
+    <p style="font-size:11px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;">Your secret code</p>
+
+    <!-- The code box -->
+    <div id="codeBox" style="
+      background: linear-gradient(135deg, rgba(240,192,96,0.12), rgba(232,82,106,0.08));
+      border: 1.5px solid rgba(240,192,96,0.4);
+      border-radius: 16px;
+      padding: 22px 20px;
+      margin-bottom: 18px;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.3s;
+    " onclick="copyCode()" title="Tap to copy">
+      <p style="
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(20px, 5vw, 28px);
+        font-style: italic;
+        color: var(--gold);
+        letter-spacing: 0.05em;
+        line-height: 1.4;
+      ">"Will you marry me" 💍</p>
+      <p style="margin-top:10px;font-size:11px;color:rgba(240,192,96,0.5);letter-spacing:0.1em;">TAP TO COPY</p>
+    </div>
+
+    <p id="copiedMsg" style="font-size:12px;color:var(--gold);opacity:0;transition:opacity 0.3s;margin-bottom:16px;letter-spacing:0.08em;">
+      ✓ Copied to clipboard!
+    </p>
+
+    <p class="final-msg">
+      From a random voice call, to a DM about a bike, to somehow
+      becoming my favourite person — <em>you happened to me and I wouldn't change a thing.</em>
+      This code is your gift. Use it wisely, chicken. 🐔
+    </p>
+    <p class="final-sign">— With love, always 🌸</p>
+  </div>
+
+  <div class="hearts">
+    <span>🌸</span><span>❤️</span><span>🌸</span>
+  </div>
+</div>
+
+<!-- ══════════════ UNLOCK PANEL ══════════════ -->
+<div class="unlock-panel" id="unlockPanel">
+  <div class="unlock-emoji" id="unlockEmoji">🎉</div>
+  <h2 class="unlock-title" id="unlockTitle">Unlocked!</h2>
+  <p class="unlock-msg" id="unlockMsg"></p>
+  <button class="btn-next" id="btnNext" onclick="nextClue()">Next clue →</button>
+</div>
+
+<script>
+  /* ══════════════════════════════════════════
+     CLUES — Edit text/answer/message freely
+  ══════════════════════════════════════════ */
+  const clues = [
+    {
+      emoji: "📞",
+      text: "It all started with voices, not faces. A group, a call, a laugh you couldn't quite place. What do we call the app where many voices gather, but nobody types a word?",
+      hint: "Think: where we first heard each other 🎙️",
+      answers: ["discord", "voice call", "call", "group call"],
+      unlockEmoji: "📞",
+      unlockTitle: "That voice call though...",
+      unlockMsg: "You were probably the loudest one in that call. Or maybe the quietest. Either way, <em>I noticed.</em>"
+    },
+    {
+      emoji: "🚴",
+      text: "Everyone was excited about the trip. Mountains, gates, adventure. But you dropped the most iconic confession — that you didn't know how to do something every childhood should've taught you. What was it?",
+      hint: "Two wheels, no engine, lots of balance 🚲",
+      answers: ["ride a bike", "cycling", "bike", "bicycle", "ride bike", "riding a bike"],
+      unlockEmoji: "🚲",
+      unlockTitle: "She doesn't know how to ride a bike 😂",
+      unlockMsg: "Truly the best thing you ever said. Because it gave me the best excuse to slide into your DMs. <em>Best DM I ever sent.</em>"
+    },
+    {
+      emoji: "🌋",
+      text: "The trip that started everything — the one where bikes, gates, and destiny all collided. It wasn't just any park. It's a place carved by fire, ancient and dramatic — just like how our story began. Name it.",
+      hint: "Kenya's most dramatic national park. Dramatic. Like us. 🔥",
+      answers: ["hells gate", "hell's gate", "hells gate national park", "hell's gate national park", "hellsgate"],
+      unlockEmoji: "🌋",
+      unlockTitle: "Hell's Gate 🔥",
+      unlockMsg: "A whole national park that became part of our story. <em>Not bad for a girl who can't ride a bike.</em>"
+    },
+    {
+      emoji: "🌍",
+      text: "The final clue. Our most ridiculous, most precious, most us nickname. We throw it at each other like it's the greatest insult and the greatest term of endearment all at once. Now say it — but say it in French. 🇫🇷",
+      hint: "Poulet. Pollo. One of those. Pick the French one 🐔",
+      answers: ["poulet"],
+      unlockEmoji: "🐔",
+      unlockTitle: "POULET!!!",
+      unlockMsg: "You got it, chicken. Now go collect your gift. <em>A secret code awaits...</em> 🎁"
+    }
+  ];
+
+  /* ══════════════════════════════════════════ */
+
+  let current = 0;
+  const wrongMessages = [
+    "Hmm, not quite... try again 🤔",
+    "So close! Or maybe not 😂 Think harder!",
+    "Nope! But I believe in you 💪",
+    "Still no... are you even trying chicken? 😂",
+    "You'll get it! Keep going 🌸"
+  ];
+  let wrongCount = 0;
+
+  // Build stars
+  const starsBg = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      animation-duration:${2+Math.random()*4}s;
+      animation-delay:${-Math.random()*4}s;
+    `;
+    starsBg.appendChild(s);
+  }
+
+  // Build progress dots
+  function buildDots() {
+    const wrap = document.getElementById('progressDots');
+    wrap.innerHTML = '';
+    clues.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'clue-dot' +
+        (i < current ? ' done' : i === current ? ' active' : '');
+      wrap.appendChild(d);
+    });
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function startGame() {
+    current = 0;
+    loadClue();
+    showScreen('screen-clue');
+  }
+
+  function loadClue() {
+    const c = clues[current];
+    buildDots();
+    document.getElementById('clueNumber').textContent = `Clue ${current+1} of ${clues.length}`;
+    document.getElementById('clueEmoji').textContent  = c.emoji;
+    document.getElementById('clueText').textContent   = c.text;
+    document.getElementById('clueHint').textContent   = c.hint;
+    document.getElementById('answerInput').value      = '';
+    document.getElementById('answerInput').className  = 'answer-input';
+    document.getElementById('wrongMsg').className     = 'wrong-msg';
+    document.getElementById('wrongMsg').textContent   = '';
+    wrongCount = 0;
+    setTimeout(() => document.getElementById('answerInput').focus(), 400);
+  }
+
+  function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    const val   = input.value.trim().toLowerCase();
+    const c     = clues[current];
+
+    if (!val) return;
+
+    if (c.answers.includes(val)) {
+      // Correct!
+      input.className = 'answer-input correct';
+      showUnlock(c);
+    } else {
+      // Wrong
+      input.className = 'answer-input wrong';
+      setTimeout(() => input.className = 'answer-input', 500);
+      const msg = document.getElementById('wrongMsg');
+      msg.textContent = wrongMessages[wrongCount % wrongMessages.length];
+      msg.className = 'wrong-msg show';
+      wrongCount++;
+    }
+  }
+
+  function showUnlock(clue) {
+    const panel = document.getElementById('unlockPanel');
+    document.getElementById('unlockEmoji').textContent = clue.unlockEmoji;
+    document.getElementById('unlockTitle').textContent = clue.unlockTitle;
+    document.getElementById('unlockMsg').innerHTML     = clue.unlockMsg;
+
+    const isLast = current === clues.length - 1;
+    const btn    = document.getElementById('btnNext');
+    btn.textContent = isLast ? 'See your message 💌' : 'Next clue →';
+    btn.onclick     = isLast ? goToFinal : nextClue;
+
+    panel.classList.add('show');
+    spawnConfetti();
+  }
+
+  function nextClue() {
+    document.getElementById('unlockPanel').classList.remove('show');
+    current++;
+    if (current < clues.length) {
+      loadClue();
+    } else {
+      goToFinal();
+    }
+  }
+
+  function goToFinal() {
+    document.getElementById('unlockPanel').classList.remove('show');
+    showScreen('screen-final');
+    spawnConfetti();
+    setTimeout(spawnConfetti, 800);
+    setTimeout(spawnConfetti, 1600);
+  }
+
+
+  function copyCode() {
+    const code = "Will you marry me";
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => showCopied());
+    } else {
+      // Fallback for mobile browsers
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0,99999);
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showCopied();
+    }
+  }
+  function showCopied() {
+    const el = document.getElementById('copiedMsg');
+    el.style.opacity = '1';
+    const box = document.getElementById('codeBox');
+    box.style.borderColor = 'var(--gold)';
+    setTimeout(() => { el.style.opacity = '0'; box.style.borderColor = 'rgba(240,192,96,0.4)'; }, 2500);
+  }
+
+  function spawnConfetti() {
+    const colors = ['#e8526a','#f0c060','#f5ddd0','#fff','#c0384f','#d4a040'];
+    for (let i = 0; i < 40; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: -10px;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        width: ${6+Math.random()*8}px;
+        height: ${6+Math.random()*8}px;
+        border-radius: ${Math.random()>0.5?'50%':'2px'};
+        animation-duration: ${2+Math.random()*2}s;
+        animation-delay: ${Math.random()*0.5}s;
+      `;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+  }
+</script>
+</body>
+</html>
